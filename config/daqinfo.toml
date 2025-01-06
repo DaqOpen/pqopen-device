@@ -1,0 +1,66 @@
+# This is a Arduino Due DAQ Configuration File
+[board]
+type = "duedaq"
+samplerate = 50000
+differential = true
+gain = "DIFF_1X"
+
+[channel.U1]
+ai_pin = "A7"
+enabled=true
+gain = 1.0
+offset = 0
+delay = 0
+unit = "V"
+
+[channel.I1]
+ai_pin = "A5"
+enabled=true
+gain = 1.0
+offset = 0
+delay = 0
+unit = "A"
+sensor = "sct13"
+
+[channel.U2]
+ai_pin = "A8"
+enabled=true
+gain = 1.0
+offset = 0
+delay = 0
+unit = "V"
+
+[channel.I2]
+ai_pin = "A3"
+enabled=true
+gain = 1.0
+offset = 0
+delay = 0
+unit = "A"
+sensor = "sct13"
+
+[channel.U3]
+ai_pin = "A10"
+enabled=true
+gain = 1.0
+offset = 0
+delay = 0
+unit = "V"
+
+[channel.I3]
+ai_pin = "A1"
+enabled=true
+gain = 1.0
+offset = 0
+delay = 0
+unit = "A"
+sensor = "sct13"
+
+[sensor.sct13]
+gain=2000.0
+delay = -8
+
+[app.zmq_server]
+daq_port = ""
+tcp_port = 50001
+bind_addr = "127.0.0.1"

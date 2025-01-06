@@ -1,0 +1,42 @@
+# This is the config for simple pqopen app
+[powersystem]
+nominal_frequency = 50.0
+zcd_channel = "U1"
+
+[powersystem.phase.1]
+u_channel = "U1"
+i_channel = "I1"
+
+[powersystem.phase.2]
+u_channel = "U2"
+i_channel = "I2"
+
+[powersystem.phase.3]
+u_channel = "U3"
+i_channel = "I3"
+
+[storageplan.csv_1s]
+endpoint = "csv"
+channels = []
+interval_sec = 1
+
+[storageplan.mqtt_10s]
+endpoint = "mqtt"
+channels = []
+interval_sec = 10
+store_events = true
+
+[storageplan.mqtt_dataseries]
+endpoint = "mqtt"
+channels = ["U1_rms", "U1_1p_rms"]
+interval_sec = 0
+
+[endpoint.csv]
+file_path = "/tmp/"
+
+[endpoint.mqtt]
+hostname = "localhost"
+
+[zmq_server]
+port=50001
+host="localhost"
