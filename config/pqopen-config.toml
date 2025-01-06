@@ -32,7 +32,7 @@ channels = ["U1_rms", "U1_1p_rms"]
 interval_sec = 0
 
 [endpoint.csv]
-file_path = "/tmp/"
+data_dir = "/var/lib/pqopen"
 
 [endpoint.mqtt]
 hostname = "localhost"
