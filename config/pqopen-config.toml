@@ -26,6 +26,11 @@ channels = []
 interval_sec = 10
 store_events = true
 
+#[storageplan.mqtt_1s_cal]
+#endpoint = "mqtt"
+#channels = []
+#interval_sec = 1
+
 [storageplan.mqtt_dataseries]
 endpoint = "mqtt"
 channels = ["U1_rms", "U1_1p_rms"]
@@ -36,6 +41,8 @@ data_dir = "/var/lib/pqopen"
 
 [endpoint.mqtt]
 hostname = "localhost"
+compression = true
+#topic_prefix = "cal/pqopen"
 
 [zmq_server]
 port=50001

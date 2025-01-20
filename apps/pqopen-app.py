@@ -7,6 +7,8 @@ import os
 import argparse
 from pathlib import Path
 
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
 from daqopen.channelbuffer import AcqBufferPool
 from daqopen.daqzmq import DaqSubscriber
 from daqopen.helper import GracefulKiller
@@ -50,8 +52,9 @@ print("Daq Connected")
 
 # Create DAQ Buffer Object
 daq_buffer = AcqBufferPool(daq_info=daq_sub.daq_info, 
-                                data_columns=daq_sub.data_columns,
-                                start_timestamp_us=int(daq_sub.timestamp*1e6))
+                           data_columns=daq_sub.data_columns,
+                           start_timestamp_us=int(daq_sub.timestamp*1e6),
+                           size=200_000)
 
 # Create Powersystem Object
 power_system = PowerSystem(zcd_channel = daq_buffer.channel[config["powersystem"]["zcd_channel"]],
@@ -87,11 +90,6 @@ for ch_name in [f"U{idx+1:d}_1p_hp_rms" for idx in range(len(power_system._phase
 # Initialize Acq variables
 print_values_timestamp = time.time()
 last_packet_number = None
-
-# Initialize ZMQ Publisher
-context = zmq.Context()
-socket = context.socket(zmq.PUB)
-socket.bind("tcp://*:5555")  # An Port 5555 binden
 
 # Application Loop
 while not app_terminator.kill_now:
