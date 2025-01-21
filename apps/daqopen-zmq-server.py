@@ -19,11 +19,14 @@ import time
 import threading
 import logging
 import argparse
+import os
+
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 # Import PQopen Specific Modules
 from daqopen.daqinfo import DaqInfo
 from daqopen.duedaq import DueDaq, AcqNotRunningException, DAQErrorException
-from daqopen.helper import GracefulKiller, check_time_sync
+from daqopen.helper import GracefulKiller
 from daqopen.daqzmq import DaqPublisher
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -61,12 +64,6 @@ daq_pub = DaqPublisher(daq_info=daq_info,
                        host=daq_config["app"]["zmq_server"]["bind_addr"], 
                        port=daq_config["app"]["zmq_server"]["tcp_port"])
 
-# Sync Status
-actual_time_sync_state = [False]
-last_sync_status_checked = 0
-sync_check_thread = threading.Thread(target=check_time_sync, args=(actual_time_sync_state,))
-sync_check_thread.start()
-
 # Local Time Sync
 last_system_time = 0.0
 acq_timestamp = 0.0
@@ -78,16 +75,10 @@ last_log_timestamp = 0.0
 # Prepare for acquisition
 sent_packet_num = 0
 
+# Start acquisition
 myDaq.start_acquisition()
 
 while not terminator.kill_now:
-    # Check status of system time sync every 10s
-    if ((last_sync_status_checked + 10) < time.time()) and (not sync_check_thread.is_alive()):
-        sync_check_thread.join()
-        sync_check_thread = threading.Thread(target=check_time_sync, args=(actual_time_sync_state,))
-        sync_check_thread.start()
-        last_sync_status_checked = time.time()
-
     # Read Data from DAQ
     try:
         data = myDaq.read_data()
@@ -105,12 +96,12 @@ while not terminator.kill_now:
     acq_timestamp += data.shape[0] / myDaq.samplerate * acq_time_correction_factor
     
     # Send data with ZMQ
-    daq_pub.send_data(data, sent_packet_num, acq_timestamp, actual_time_sync_state[0])
+    daq_pub.send_data(data, sent_packet_num, acq_timestamp, True)
     sent_packet_num += 1
 
     # Log Status
     if actual_timestamp > last_log_timestamp + 60:
-        logger.info(f"Packet Number: {sent_packet_num:d}, Sync: {actual_time_sync_state[0]}")
+        logger.info(f"Packet Number: {sent_packet_num:d}")
         last_log_timestamp = actual_timestamp
 
     # Sync Time
