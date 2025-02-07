@@ -36,7 +36,7 @@ with open(args.config, "rb") as f:
 # Read Device ID
 device_id_file = Path("/etc/pqopen/device-id")
 if device_id_file.exists():
-    device_id = device_id_file.read_text()
+    device_id = device_id_file.read_text().strip()
 else:
     device_id = "00000000-0000-0000-0000-000000000000"
 

@@ -83,6 +83,11 @@ StandardOutput=journal
 StandardError=journal
 User=$USER
 Group=$USER
+IOSchedulingClass=realtime
+IOSchedulingPriority=0
+CPUAffinity=3
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=99
 
 [Install]
 WantedBy=multi-user.target
