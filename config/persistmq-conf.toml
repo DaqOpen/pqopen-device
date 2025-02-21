@@ -1,0 +1,11 @@
+[source]
+mqtt_host = "pqopen-0020"
+mqtt_port = 1883
+topics = ["dt/pqopen/#"]
+
+[destination]
+mqtt_host = "100.64.4.1"
+mqtt_port = 1883
+
+[cache]
+path = "/tmp/persistmq"
