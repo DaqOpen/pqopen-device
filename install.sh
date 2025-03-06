@@ -62,6 +62,8 @@ source $INSTALL_DIR/.venv/bin/activate
 echo "Installing Python-Packages"
 #pip install --upgrade pip
 pip install pqopen-lib
+pip install paho-mqtt
+pip install persistmq
 
 echo "Deactivate Environment"
 deactivate
@@ -104,6 +106,28 @@ After=network.target
 [Service]
 Type=simple
 ExecStart=$INSTALL_DIR/.venv/bin/python pqopen-app.py --config $CONFIG_DIR/pqopen-config.toml
+WorkingDirectory=$INSTALL_DIR
+Restart=always
+RestartSec=60s
+StandardOutput=journal
+StandardError=journal
+User=$USER
+Group=$USER
+Nice=-1
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# Create a systemd servce file for persistmq-bridge
+cat <<EOF | sudo tee /etc/systemd/system/persistmq-bridge.service
+[Unit]
+Description=PersistMQ Bridge Service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$INSTALL_DIR/.venv/bin/python persistmq-bridge.py --config $CONFIG_DIR/persistmq-conf.toml
 WorkingDirectory=$INSTALL_DIR
 Restart=always
 RestartSec=60s
