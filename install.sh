@@ -154,5 +154,19 @@ sudo systemctl disable apt-daily.timer
 sudo systemctl disable apt-daily-upgrade.timer
 sudo systemctl disable apt-daily-upgrade.service
 
+# Install Comitup WiFi
+wget https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.2_all.deb
+sudo dpkg -i davesteele-comitup-apt-source*.deb
+sudo apt-get update
+sudo apt-get install comitup
+
+sudo rm /etc/network/interfaces
+sudo systemctl mask dnsmasq.service
+sudo systemctl mask systemd-resolved.service
+sudo systemctl mask dhcpd.service
+sudo systemctl mask dhcpcd.service
+sudo systemctl mask wpa-supplicant.service
+sudo systemctl enable NetworkManager.service
+
 echo "Installation completed successfully!"
 
