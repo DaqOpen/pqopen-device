@@ -19,6 +19,7 @@ import logging
 import argparse
 from pathlib import Path
 import time
+import socket
 
 from paho.mqtt import client as mqtt
 from persistmq.client import PersistClient
@@ -55,8 +56,10 @@ def handle_message(client, userdata, msg):
 
 if __name__ == "__main__":
     # Configure persistmq-client for sending
-    write_client = PersistClient(client_id="persistmq-bridge", cache_path=Path(config["cache"].get("path", "/tmp/")))
-    write_client.connect_async(mqtt_host=config["destination"]["mqtt_host"])
+    client_id = config["destination"].get("client_id", socket.gethostname())
+    write_client = PersistClient(client_id=client_id, cache_path=Path(config["cache"].get("path", "/tmp/")))
+    write_client.connect_async(mqtt_host=config["destination"]["mqtt_host"],
+                               mqtt_port=config["destination"]["mqtt_port"])
     
     # Configure Source/Reading MQTT Client
     read_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="persistmq-bridge", clean_session=False)

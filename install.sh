@@ -147,6 +147,8 @@ sudo systemctl enable daqopen-zmq-server.service
 sudo systemctl start daqopen-zmq-server.service
 sudo systemctl enable pqopen.service
 sudo systemctl start pqopen.service
+sudo systemctl enable persistmq-bridge.service
+sudo systemctl start persistmq-bridge.service
 
 echo "Disabling apt auto update..."
 sudo systemctl disable apt-daily.service
@@ -158,7 +160,7 @@ sudo systemctl disable apt-daily-upgrade.service
 wget https://davesteele.github.io/comitup/deb/davesteele-comitup-apt-source_1.2_all.deb
 sudo dpkg -i davesteele-comitup-apt-source*.deb
 sudo apt-get update
-sudo apt-get install comitup
+sudo apt-get install -y comitup
 
 sudo rm /etc/network/interfaces
 sudo systemctl mask dnsmasq.service

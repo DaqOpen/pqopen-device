@@ -2,6 +2,7 @@
 [powersystem]
 nominal_frequency = 50.0
 zcd_channel = "U1"
+energy_file_path = "./energy.json"
 
 [powersystem.phase.1]
 u_channel = "U1"
@@ -31,10 +32,16 @@ store_events = true
 #channels = []
 #interval_sec = 1
 
-[storageplan.mqtt_dataseries]
-endpoint = "mqtt"
-channels = ["U1_rms", "U1_1p_rms"]
-interval_sec = 0
+#[storageplan.mqtt_dataseries]
+#endpoint = "mqtt"
+#channels = ["U1_rms", "U1_1p_rms"]
+#interval_sec = 0
+
+[storageplan.ha_mqtt_1s]
+endpoint = "ha_mqtt"
+channels = ["W_pos", "W_neg"]
+interval_sec = 1
+qos = 1
 
 [endpoint.csv]
 data_dir = "/var/lib/pqopen"
@@ -44,6 +51,11 @@ hostname = "localhost"
 compression = true
 #topic_prefix = "cal/pqopen"
 
+[endpoint.ha_mqtt]
+hostname = "localhost"
+client_id = "pqopen-ha"
+topic_prefix = "pqopen/data"
+
 [zmq_server]
 port=50001
-host="localhost"
+host="pqopen-0021"
