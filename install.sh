@@ -34,10 +34,18 @@ else
     echo "Configuration file already exists, skipping."
 fi
 
-# Copy example configuration
+# Copy example daqinfo configuration
 if [ ! -f "$CONFIG_DIR/daqinfo.toml" ]; then
     echo "Copying default daqinfo..."
     sudo cp config/daqinfo.toml $CONFIG_DIR/daqinfo.toml
+else
+    echo "DaqInfo file already exists, skipping."
+fi
+
+# Copy example configuration of persistmq
+if [ ! -f "$CONFIG_DIR/persistmq-conf.toml" ]; then
+    echo "Copying default persistmq-conf..."
+    sudo cp config/persistmq-conf.toml $CONFIG_DIR/persistmq-conf.toml
 else
     echo "DaqInfo file already exists, skipping."
 fi
@@ -169,6 +177,9 @@ sudo systemctl mask dhcpd.service
 sudo systemctl mask dhcpcd.service
 sudo systemctl mask wpa-supplicant.service
 sudo systemctl enable NetworkManager.service
+
+# Install mosquitto broker, may be used as gateway
+sudo apt-get install -y mosquitto
 
 echo "Installation completed successfully!"
 

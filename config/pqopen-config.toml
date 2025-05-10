@@ -1,9 +1,17 @@
-# This is the config for simple pqopen app
-[powersystem]
-nominal_frequency = 50.0
-zcd_channel = "U1"
-energy_file_path = "./energy.json"
+# Simple PQOpen Application Configuration
+# Note: Channel names must match those in 'daqinfo.toml'
 
+#################################
+# Power System Configuration
+#################################
+[powersystem]
+nominal_frequency = 50.0        # Nominal system frequency in Hz
+nominal_voltage   = 230.0       # Nominal voltage in Volt
+msv_frequency     = 383.3       # Mains signaling frequency in Hz
+zcd_channel       = "U1"        # Channel for Zero-Cross Detection (Cycle Sync)
+energy_file_path  = "./energy.json" # Path to persist energy data
+
+# Phase Channel Mappings
 [powersystem.phase.1]
 u_channel = "U1"
 i_channel = "I1"
@@ -16,46 +24,70 @@ i_channel = "I2"
 u_channel = "U3"
 i_channel = "I3"
 
+#################################
+# Event Detector Parameters
+#################################
+[eventdetector]
+level_low_voltage  = 208.0   # Threshold for low voltage in Volt
+level_high_voltage = 253.0   # Threshold for high voltage in Volt
+hysteresis_voltage  = 2.0     # Voltage hysteresis band in Volt
+
+#################################
+# Storage Plans
+#################################
+# Define storage targets and aggregation settings
+
+# 1-second CSV storage
 [storageplan.csv_1s]
-endpoint = "csv"
-channels = []
-interval_sec = 1
+endpoint     = "csv"        # Must match an endpoint defined below
+channels     = []           # List of channels to store (empty = all channels)
+interval_sec = 1            # Aggregation interval in seconds (0 = no aggregation)
 
+# 10-second MQTT storage with event reporting
 [storageplan.mqtt_10s]
-endpoint = "mqtt"
-channels = []
+endpoint     = "mqtt"
+channels     = []
 interval_sec = 10
-store_events = true
+store_events = true         # Also store events with this storage plan
 
-#[storageplan.mqtt_1s_cal]
-#endpoint = "mqtt"
-#channels = []
-#interval_sec = 1
+# Raw DataChannelBuffer transfer over MQTT (no aggregation)
+[storageplan.mqtt_dataseries]
+endpoint     = "mqtt"
+channels     = ["Freq", "U1_1p_slope"]
+interval_sec = 0            # 0 means no aggregation
 
-#[storageplan.mqtt_dataseries]
-#endpoint = "mqtt"
-#channels = ["U1_rms", "U1_1p_rms"]
-#interval_sec = 0
-
+# 1-second MQTT storage for Home Assistant
 [storageplan.ha_mqtt_1s]
-endpoint = "ha_mqtt"
-channels = ["W_pos", "W_neg"]
+endpoint     = "ha_mqtt"
+channels     = ["W_pos", "W_neg"]
 interval_sec = 1
-qos = 1
+qos          = 1
 
+#################################
+# Endpoint Definitions
+#################################
+# Define data output endpoints (csv, mqtt, ha_mqtt)
+
+# CSV file storage endpoint
 [endpoint.csv]
-data_dir = "/var/lib/pqopen"
+data_dir = "/var/lib/pqopen" # Path where CSV files will be stored
 
+# MQTT broker settings
 [endpoint.mqtt]
-hostname = "localhost"
-compression = true
-#topic_prefix = "cal/pqopen"
+hostname        = "100.64.4.1" # MQTT broker address
+compression     = true         # Enable gzip compression of JSON payloads
+decimal_places  = 4            # Reduce decimal precision (optional)
+# topic_prefix = "cal/pqopen"   # Optional topic prefix
 
-[endpoint.ha_mqtt]
-hostname = "localhost"
-client_id = "pqopen-ha"
-topic_prefix = "pqopen/data"
+# Home Assistant MQTT endpoint (example, commented out)
+#[endpoint.ha_mqtt]
+#hostname    = "localhost"
+#client_id   = "pqopen-ha"
+#topic_prefix = "pqopen/data"
 
+#################################
+# Data Acquisition Server (DAQOpen ZMQ)
+#################################
 [zmq_server]
-port=50001
-host="pqopen-0021"
+host = "127.0.0.1"
+port = 50001

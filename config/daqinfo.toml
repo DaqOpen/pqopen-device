@@ -1,66 +1,84 @@
-# This is a Arduino Due DAQ Configuration File
+# Arduino Due DAQ Configuration
+
+#################################
+# Board Settings
+#################################
 [board]
-type = "duedaq"
-samplerate = 50000
-differential = true
-gain = "DIFF_1X"
+type         = "duedaq"     # Board type identifier
+samplerate   = 50000        # Sampling rate in Hz
+differential = true         # Input configuration: true = differential, false = single-ended
+gain         = "DIFF_1X"    # Allowed values: SGL_1X, SGL_2X, SGL_4X, DIFF_05X, DIFF_1X, DIFF_2X
+
+#################################
+# Channel Configuration
+#################################
+# Define channels: channel.individual_channel_name
 
 [channel.U1]
-ai_pin = "A7"
-enabled=true
-gain = 1.0
-offset = 0
-delay = 0
-unit = "V"
+ai_pin  = "A7"              # Analog input pin on Arduino header
+enabled = true              # Enable or disable the channel
+gain    = 0.22              # Gain correction factor
+offset  = 0                 # Offset correction value
+delay   = 0                 # Channel-specific sample delay
+unit    = "V"               # Measurement unit (e.g., V for voltage)
 
 [channel.I1]
-ai_pin = "A5"
-enabled=true
-gain = 1.0
-offset = 0
-delay = 0
-unit = "A"
-sensor = "sct13"
+ai_pin  = "A5"
+enabled = true
+gain    = 1.0e-5
+offset  = 0
+delay   = 0
+unit    = "A"
+sensor  = "sct13"           # Reference to a sensor configuration
 
 [channel.U2]
-ai_pin = "A8"
-enabled=true
-gain = 1.0
-offset = 0
-delay = 0
-unit = "V"
+ai_pin  = "A8"
+enabled = true
+gain    = 0.22
+offset  = 0
+delay   = 0
+unit    = "V"
 
 [channel.I2]
-ai_pin = "A3"
-enabled=true
-gain = 1.0
-offset = 0
-delay = 0
-unit = "A"
-sensor = "sct13"
+ai_pin  = "A3"
+enabled = true
+gain    = 1.0e-5
+offset  = 0
+delay   = 0
+unit    = "A"
+sensor  = "sct13"
 
 [channel.U3]
-ai_pin = "A10"
-enabled=true
-gain = 1.0
-offset = 0
-delay = 0
-unit = "V"
+ai_pin  = "A10"
+enabled = true
+gain    = 0.22
+offset  = 0
+delay   = 0
+unit    = "V"
 
 [channel.I3]
-ai_pin = "A1"
-enabled=true
-gain = 1.0
-offset = 0
-delay = 0
-unit = "A"
-sensor = "sct13"
+ai_pin  = "A1"
+enabled = true
+gain    = 1.0e-5
+offset  = 0
+delay   = 0
+unit    = "A"
+sensor  = "sct13"
+
+#################################
+# Sensor Definitions
+#################################
+# Define external sensor parameters
 
 [sensor.sct13]
-gain=2000.0
-delay = -8
+gain   = 2000.0             # Sensor-specific gain factor
+offset = 0                  # Sensor offset correction
+delay  = -8                 # Sensor-specific sample delay (in samples)
 
+#################################
+# DAQ ZMQ Server Configuration
+#################################
 [app.zmq_server]
-daq_port = ""
-tcp_port = 50001
-bind_addr = "127.0.0.1"
+daq_port  = ""              # TTY device for Arduino; auto-detect if empty
+tcp_port  = 50001           # TCP port to serve data
+bind_addr = "127.0.0.1"     # Bind address (use 0.0.0.0 to bind to all interfaces)

@@ -67,9 +67,9 @@ for phase_name, phase in config["powersystem"]["phase"].items():
                            i_channel=daq_buffer.channel[phase["i_channel"]])
 power_system.enable_harmonic_calculation()
 power_system.enable_nper_abs_time_sync(daq_buffer.time, interval_sec=10)
-power_system.enable_fluctuation_calculation(nominal_voltage=230)
-power_system.enable_mains_signaling_calculation(frequency=383)
-power_system.enable_under_over_deviation_calculation(u_din=230)
+power_system.enable_fluctuation_calculation(nominal_voltage=config["powersystem"].get("nominal_voltage", 230.0))
+power_system.enable_mains_signaling_calculation(frequency=config["powersystem"].get("msv_frequency", 383.3))
+power_system.enable_under_over_deviation_calculation(u_din=config["powersystem"].get("nominal_voltage", 230.0))
 power_system.enable_energy_channels(Path(config["powersystem"].get("energy_file_path", "/tmp/energy.json")))
 
 # Initialize Storage Controller
@@ -84,8 +84,11 @@ storage_controller.setup_endpoints_and_storageplans(endpoints=config["endpoint"]
 # Initialize Event Controller
 event_controller = EventController(time_channel=daq_buffer.time, sample_rate=daq_sub.daq_info.board.samplerate)
 for ch_name in [f"U{idx+1:d}_1p_hp_rms" for idx in range(len(power_system._phases))]:
-    event_controller.add_event_detector(EventDetectorLevelLow(208, 2, power_system.output_channels[ch_name]))
-    event_controller.add_event_detector(EventDetectorLevelHigh(253, 2, power_system.output_channels[ch_name]))
+    level_low_voltage = config["eventdetector"].get("level_low_voltage", 208.0)
+    level_high_voltage = config["eventdetector"].get("level_high_voltage", 253.0)
+    threshold_voltage = config["eventdetector"].get("hysteresis_voltage", 2.0)
+    event_controller.add_event_detector(EventDetectorLevelLow(level_low_voltage, threshold_voltage, power_system.output_channels[ch_name]))
+    event_controller.add_event_detector(EventDetectorLevelHigh(level_high_voltage, threshold_voltage, power_system.output_channels[ch_name]))
     
 # Initialize Acq variables
 print_values_timestamp = time.time()
