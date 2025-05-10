@@ -39,13 +39,31 @@ The main pcb is dual layer with components on both sides. It uses typically SMT 
 
 ## Software Overview
 
-The software is split into two components:
+The software is split into several components:
 
-1. **Firmware (C++)**: Runs on the Arduino Due for ADC data acquisition (see https://github.com/DaqOpen/daqopen-lib)
-2. **Edge Device Software (Python)**: Runs on the Raspberry Pi for:
-   - Data processing (calculating parameters at adjustable intervals).
-   - Data storage.
-   - Communication with an MQTT broker.
+### Firmware for Arduino Due
+
+Runs on the Arduino Due for ADC data acquisition (see https://github.com/DaqOpen/daqopen-lib)
+
+Written in C++ for Arduino IDE
+
+### Software for Raspberry Pi
+
+There are three main software components running on the Raspberry Pi edge device to fulfill the measurement needs:
+
+#### daqopen-zmq-server.py
+
+This is the data entry point for the further processing. It receives data form the Arduino Due, adds timestamps as well as channel properties and provides the data via a ZMQ PUB/SUB interface.
+
+This service is time critical due to limited buffer on the Arduino Due and is therefore started with higher priority and realtime scheduler option.
+
+#### pqopen.py
+
+The pqopen app is the main processing application. It connects to the daqopen-zmq-server and receives the data, calculates power values and outputs it on the configured interfaces.
+
+#### persistmq-bridge.py
+
+When data loss is no option, the persistmq-bridge helps to cache data in case of connection loss and resending capability.
 
 
 
