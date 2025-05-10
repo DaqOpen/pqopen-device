@@ -74,8 +74,8 @@ data_dir = "/var/lib/pqopen" # Path where CSV files will be stored
 
 # MQTT broker settings
 [endpoint.mqtt]
-hostname        = "100.64.4.1" # MQTT broker address
-compression     = true         # Enable gzip compression of JSON payloads
+hostname        = "localhost"  # MQTT broker address
+compression     = false        # Enable/Disable gzip compression of JSON payloads
 decimal_places  = 4            # Reduce decimal precision (optional)
 # topic_prefix = "cal/pqopen"   # Optional topic prefix
 

@@ -49,6 +49,8 @@ Written in C++ for Arduino IDE
 
 ### Software for Raspberry Pi
 
+![PQopen Device Software](docs/resources/pqopen-device-software-blockdiagram.png)
+
 There are three main software components running on the Raspberry Pi edge device to fulfill the measurement needs:
 
 #### daqopen-zmq-server.py
