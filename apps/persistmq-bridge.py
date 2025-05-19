@@ -20,13 +20,19 @@ import argparse
 from pathlib import Path
 import time
 import socket
+import random
+import string
 
 from paho.mqtt import client as mqtt
 from persistmq.client import PersistClient
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
-   
+
+def generate_unique_client_id(prefix: str, number_char: int):
+    chars = string.ascii_lowercase + string.digits  # a-z, 0-9
+    random_str = ''.join(random.choices(chars, k=number_char))
+    return prefix+"-"+random_str
 
 # Configure Argparser
 parser = argparse.ArgumentParser(description="Configure App Paths")
@@ -58,11 +64,17 @@ if __name__ == "__main__":
     # Configure persistmq-client for sending
     client_id = config["destination"].get("client_id", socket.gethostname())
     write_client = PersistClient(client_id=client_id, cache_path=Path(config["cache"].get("path", "/tmp/")))
+    write_client.mqtt_client.username_pw_set(username=config["destination"].get("username", ""), 
+                                             password=config["destination"].get("password", ""))
+    if config["destination"].get("use_tls", False):
+        write_client.mqtt_client.tls_set()
     write_client.connect_async(mqtt_host=config["destination"]["mqtt_host"],
                                mqtt_port=config["destination"]["mqtt_port"])
     
     # Configure Source/Reading MQTT Client
-    read_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="persistmq-bridge", clean_session=False)
+    read_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, 
+                              client_id=generate_unique_client_id("persistmq-bridge", 4), 
+                              clean_session=False)
     read_client.on_message = handle_message
     read_client.on_connect = on_connect
     read_client.connect_async(config["source"].get("mqtt_host", "localhost"), 
