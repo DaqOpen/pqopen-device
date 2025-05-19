@@ -53,6 +53,7 @@ store_events = true         # Also store events with this storage plan
 # Raw DataChannelBuffer transfer over MQTT (no aggregation)
 [storageplan.mqtt_dataseries]
 endpoint     = "mqtt"
+mqtt_topic_prefix = "private"
 channels     = ["Freq", "U1_1p_slope"]
 interval_sec = 0            # 0 means no aggregation
 
@@ -89,5 +90,5 @@ decimal_places  = 4            # Reduce decimal precision (optional)
 # Data Acquisition Server (DAQOpen ZMQ)
 #################################
 [zmq_server]
-host = "127.0.0.1"
+host = "pqopen-0021"
 port = 50001

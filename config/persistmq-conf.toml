@@ -1,12 +1,15 @@
 [source]
-mqtt_host = "pqopen-0020"
+mqtt_host = "localhost"
 mqtt_port = 1883
-topics = ["dt/pqopen/#"]
+topics = ["private/#"]
 
 [destination]
-mqtt_host = "100.64.4.1"
-mqtt_port = 1883
-client_id = "pqopen-0021"
+mqtt_host = "mqtt.pqopen.com"
+mqtt_port = 8883
+use_tls = true # enable tls
+username = "your-mqtt-password"
+password = "your-mqtt-password"
+client_id = "your-device-id"
 
 [cache]
 path = "/tmp/persistmq"
