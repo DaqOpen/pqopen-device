@@ -25,6 +25,7 @@ import string
 
 from paho.mqtt import client as mqtt
 from persistmq.client import PersistClient
+import importlib.metadata
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -63,7 +64,13 @@ def handle_message(client, userdata, msg):
 if __name__ == "__main__":
     # Configure persistmq-client for sending
     client_id = config["destination"].get("client_id", socket.gethostname())
-    write_client = PersistClient(client_id=client_id, cache_path=Path(config["cache"].get("path", "/tmp/")))
+    if importlib.metadata.version("persistmq") >= '0.1.0':
+        write_client = PersistClient(client_id=client_id, 
+                                     cache_path=Path(config["cache"].get("path", "/tmp/")), 
+                                     bulk_msg_count=config["bulk_messages"].get("bulk_msg_count", 100),
+                                     bulk_topic_rewrite=config["bulk_messages"].get("bulk_topic_rewrite", "mixed/cbor"))
+    else:
+        write_client = PersistClient(client_id=client_id, cache_path=Path(config["cache"].get("path", "/tmp/")))
     write_client.mqtt_client.username_pw_set(username=config["destination"].get("username", ""), 
                                              password=config["destination"].get("password", ""))
     if config["destination"].get("use_tls", False):
