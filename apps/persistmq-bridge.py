@@ -19,6 +19,7 @@ import logging
 import argparse
 from pathlib import Path
 import time
+import zmq
 import socket
 import random
 import string
@@ -49,6 +50,13 @@ args = parser.parse_args()
 with open(args.config, "rb") as f:
     config = tomllib.load(f)
 print(config)
+
+# Init Status sender
+zmq_context = zmq.Context()
+status_socket = zmq_context.socket(zmq.PUSH)
+status_socket.connect("tcp://localhost:50002")
+# Status register
+status_reg = {"service": "persistmq-bridge", "status": None}
 
 # Callback function for connection handling
 def on_connect(client, userdata, flags, reason_code, properties):
@@ -91,3 +99,12 @@ if __name__ == "__main__":
     # Loop
     while True:
         time.sleep(1)
+        persist_client_state = write_client.get_status()
+        if persist_client_state["connected"] is None:
+            status_reg["status"] = None
+        elif persist_client_state["connected"]:
+            status_reg["status"] = "OK"
+        else:
+            status_reg["status"] = "BAD"
+        status_socket.send_json(status_reg)
+

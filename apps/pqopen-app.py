@@ -16,7 +16,7 @@ from pqopen.powersystem import PowerSystem
 from pqopen.storagecontroller import StorageController
 from pqopen.eventdetector import EventController, EventDetectorLevelLow, EventDetectorLevelHigh
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Configure Argparser
@@ -40,6 +40,14 @@ if device_id_file.exists():
 else:
     device_id = "00000000-0000-0000-0000-000000000000"
 
+# Init Status sender
+zmq_context = zmq.Context()
+status_socket = zmq_context.socket(zmq.PUSH)
+status_socket.connect("tcp://localhost:50002")
+# Status register
+status_reg = {"service": "pqopen-app", "status": None}
+last_status_checked = time.time()
+
 # Initialize App Killer
 app_terminator = GracefulKiller()
 
@@ -48,6 +56,7 @@ measurement_id = str(uuid.uuid4())
 
 # Subscribe to DaqOpen Zmq Server
 daq_sub = DaqSubscriber(config["zmq_server"]["host"], config["zmq_server"]["port"])
+daq_sub.sock.setsockopt(zmq.RCVTIMEO, 5000) # set Socket Timeout to 5000ms
 print("Daq Connected")
 
 # Create DAQ Buffer Object
@@ -96,7 +105,10 @@ last_packet_number = None
 
 # Application Loop
 while not app_terminator.kill_now:
-    m_data = daq_sub.recv_data()
+    try:
+        m_data = daq_sub.recv_data()
+    except zmq.Again:
+        logger.error("Timeout of ZMQ socket ocurred - stopping")
     if last_packet_number is None:
         last_packet_number = daq_sub.packet_num
     elif last_packet_number + 1 != daq_sub.packet_num:
@@ -110,4 +122,12 @@ while not app_terminator.kill_now:
     storage_controller.process()
     storage_controller.process_events(events)
 
+    # Publish actual state
+    if (last_status_checked + 1) < time.time():
+        status_reg["status"] = "OK"
+        status_socket.send_json(status_reg)
+        last_status_checked = time.time()
+
 print("Application Stopped")
+status_reg["status"] = "STOPPED"
+status_socket.send_json(status_reg)
