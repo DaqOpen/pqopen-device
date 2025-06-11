@@ -44,6 +44,7 @@ else:
 zmq_context = zmq.Context()
 status_socket = zmq_context.socket(zmq.PUSH)
 status_socket.connect("tcp://localhost:50002")
+
 # Status register
 status_reg = {"service": "pqopen-app", "status": None}
 last_status_checked = time.time()
@@ -92,12 +93,13 @@ storage_controller.setup_endpoints_and_storageplans(endpoints=config["endpoint"]
 
 # Initialize Event Controller
 event_controller = EventController(time_channel=daq_buffer.time, sample_rate=daq_sub.daq_info.board.samplerate)
-for ch_name in [f"U{idx+1:d}_1p_hp_rms" for idx in range(len(power_system._phases))]:
-    level_low_voltage = config["eventdetector"].get("level_low_voltage", 208.0)
-    level_high_voltage = config["eventdetector"].get("level_high_voltage", 253.0)
-    threshold_voltage = config["eventdetector"].get("hysteresis_voltage", 2.0)
-    event_controller.add_event_detector(EventDetectorLevelLow(level_low_voltage, threshold_voltage, power_system.output_channels[ch_name]))
-    event_controller.add_event_detector(EventDetectorLevelHigh(level_high_voltage, threshold_voltage, power_system.output_channels[ch_name]))
+if "eventdetector" in config:
+    for ch_name in [f"U{idx+1:d}_1p_hp_rms" for idx in range(len(power_system._phases))]:
+        level_low_voltage = config["eventdetector"].get("level_low_voltage", 208.0)
+        level_high_voltage = config["eventdetector"].get("level_high_voltage", 253.0)
+        threshold_voltage = config["eventdetector"].get("hysteresis_voltage", 2.0)
+        event_controller.add_event_detector(EventDetectorLevelLow(level_low_voltage, threshold_voltage, power_system.output_channels[ch_name]))
+        event_controller.add_event_detector(EventDetectorLevelHigh(level_high_voltage, threshold_voltage, power_system.output_channels[ch_name]))
     
 # Initialize Acq variables
 print_values_timestamp = time.time()
@@ -109,6 +111,7 @@ while not app_terminator.kill_now:
         m_data = daq_sub.recv_data()
     except zmq.Again:
         logger.error("Timeout of ZMQ socket ocurred - stopping")
+        break
     if last_packet_number is None:
         last_packet_number = daq_sub.packet_num
     elif last_packet_number + 1 != daq_sub.packet_num:
@@ -128,6 +131,9 @@ while not app_terminator.kill_now:
         status_socket.send_json(status_reg)
         last_status_checked = time.time()
 
+status_socket.setsockopt(zmq.LINGER, 1000) # Set max. Time to wait after send
 print("Application Stopped")
 status_reg["status"] = "STOPPED"
 status_socket.send_json(status_reg)
+status_socket.close()
+zmq_context.term()
