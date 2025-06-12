@@ -4,6 +4,7 @@ import zmq
 import uuid
 import logging
 import os
+import sys
 import argparse
 from pathlib import Path
 
@@ -15,6 +16,10 @@ from daqopen.helper import GracefulKiller
 from pqopen.powersystem import PowerSystem
 from pqopen.storagecontroller import StorageController
 from pqopen.eventdetector import EventController, EventDetectorLevelLow, EventDetectorLevelHigh
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from modules.statuscomm import StatusSender
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -41,13 +46,7 @@ else:
     device_id = "00000000-0000-0000-0000-000000000000"
 
 # Init Status sender
-zmq_context = zmq.Context()
-status_socket = zmq_context.socket(zmq.PUSH)
-status_socket.connect("tcp://localhost:50002")
-
-# Status register
-status_reg = {"service": "pqopen-app", "status": None}
-last_status_checked = time.time()
+status_sender = StatusSender("pqopen-app")
 
 # Initialize App Killer
 app_terminator = GracefulKiller()
@@ -127,14 +126,7 @@ while not app_terminator.kill_now:
     storage_controller.process_events(events)
 
     # Publish actual state
-    if (last_status_checked + 1) < time.time():
-        status_reg["status"] = "OK"
-        status_socket.send_json(status_reg)
-        last_status_checked = time.time()
+    status_sender.update("RUNNING")
 
-status_socket.setsockopt(zmq.LINGER, 1000) # Set max. Time to wait after send
 print("Application Stopped")
-status_reg["status"] = "STOPPED"
-status_socket.send_json(status_reg)
-status_socket.close()
-zmq_context.term()
+status_sender.update("STOPPED")
