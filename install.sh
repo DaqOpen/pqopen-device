@@ -25,6 +25,7 @@ sudo chmod -R 755 $INSTALL_DIR $CONFIG_DIR $DATA_DIR
 # Copy files
 echo "Copying files..."
 sudo cp apps/* $INSTALL_DIR/
+sudo cp -r modules $INSTALL_DIR/
 
 # Copy example configuration
 if [ ! -f "$CONFIG_DIR/pqopen-config.toml" ]; then
@@ -72,6 +73,7 @@ echo "Installing Python-Packages"
 pip install pqopen-lib
 pip install paho-mqtt
 pip install persistmq
+pip install pgiod
 
 echo "Deactivate Environment"
 deactivate
@@ -148,6 +150,27 @@ Group=$USER
 WantedBy=multi-user.target
 EOF
 
+# Create a systemd servce file for status-monitor
+cat <<EOF | sudo tee /etc/systemd/system/pqopen-status-monitor.service
+[Unit]
+Description=PQopen Status Monitor for LEDs
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=$INSTALL_DIR/.venv/bin/python status-monitor.py --config $CONFIG_DIR/statusmonitor-conf.toml
+WorkingDirectory=$INSTALL_DIR
+Restart=always
+RestartSec=60s
+StandardOutput=journal
+StandardError=journal
+User=$USER
+Group=$USER
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
 # Reload systemd and enable service
 echo "Enabling and starting pqopen service..."
 sudo systemctl daemon-reload
@@ -157,6 +180,8 @@ sudo systemctl enable pqopen.service
 sudo systemctl start pqopen.service
 sudo systemctl enable persistmq-bridge.service
 sudo systemctl start persistmq-bridge.service
+sudo systemctl enable pqopen-status-monitor.service
+sudo systemctl start pqopen-status-monitor.service
 
 echo "Disabling apt auto update..."
 sudo systemctl disable apt-daily.service
@@ -178,8 +203,21 @@ sudo systemctl mask dhcpcd.service
 sudo systemctl mask wpa-supplicant.service
 sudo systemctl enable NetworkManager.service
 
+# Disable WIFI Power Management
+cat <<EOF | sudo tee /etc/NetworkManager/conf.d/powersave.conf
+[connection]
+wifi.powersave = 2
+EOF
+
+# Set Default IO Values for LEDs
+cat <<EOF | sudo tee -a /boot/firmware/config.txt
+gpio=17,27=op,dh
+EOF
+
+
 # Install mosquitto broker, may be used as gateway
 sudo apt-get install -y mosquitto
+
 
 echo "Installation completed successfully!"
 
