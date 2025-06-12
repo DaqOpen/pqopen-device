@@ -3,7 +3,6 @@ import time
 import json
 import logging
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 BUF_SIZE = 200
@@ -45,7 +44,7 @@ class StatusReceiver(object):
             raw_data = self._sock.recv(BUF_SIZE)
             data = json.loads(raw_data.decode())
             if data["service"] not in self.status_reg:
-                logger.error(f"service name {data["service"]} not configured!")
+                logger.error(f"service name {data['service']} not configured!")
             self.status_reg[data["service"]]["status"] = data["status"]
             self.status_reg[data["service"]]["last_timestamp"] = time.time()
         except TimeoutError:
