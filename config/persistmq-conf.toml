@@ -1,15 +1,16 @@
 [source]
 mqtt_host = "localhost"
 mqtt_port = 1883
-topics = ["private/#"]
+topics = ["test/#"]
 
 [destination]
-mqtt_host = "mqtt.pqopen.com"
-mqtt_port = 8883
-use_tls = true # enable tls
-username = "your-mqtt-password"
-password = "your-mqtt-password"
-client_id = "your-device-id"
+mqtt_host = "localhost"
+mqtt_port = 1883
 
 [cache]
 path = "/tmp/persistmq"
+
+# Settings for bulk transfer of messages, if cache is above msg_count.
+[bulk_messages]
+bulk_msg_count = 100
+bulk_topic_rewrite = "mixed/cbor"

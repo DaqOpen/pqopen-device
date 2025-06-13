@@ -38,10 +38,10 @@ hysteresis_voltage  = 2.0     # Voltage hysteresis band in Volt
 # Define storage targets and aggregation settings
 
 # 1-second CSV storage
-[storageplan.csv_1s]
-endpoint     = "csv"        # Must match an endpoint defined below
-channels     = []           # List of channels to store (empty = all channels)
-interval_sec = 1            # Aggregation interval in seconds (0 = no aggregation)
+#[storageplan.csv_1s]
+#endpoint     = "csv"        # Must match an endpoint defined below
+#channels     = []           # List of channels to store (empty = all channels)
+#interval_sec = 1            # Aggregation interval in seconds (0 = no aggregation)
 
 # 10-second MQTT storage with event reporting
 [storageplan.mqtt_10s]
@@ -53,16 +53,16 @@ store_events = true         # Also store events with this storage plan
 # Raw DataChannelBuffer transfer over MQTT (no aggregation)
 [storageplan.mqtt_dataseries]
 endpoint     = "mqtt"
-mqtt_topic_prefix = "private"
-channels     = ["Freq", "U1_1p_slope"]
+mqtt_topic_prefix = "private"  # topic prefix for this storage plan
+channels     = ["Freq", "U1_1p_rms"]
 interval_sec = 0            # 0 means no aggregation
 
 # 1-second MQTT storage for Home Assistant
-[storageplan.ha_mqtt_1s]
-endpoint     = "ha_mqtt"
-channels     = ["W_pos", "W_neg"]
-interval_sec = 1
-qos          = 1
+#[storageplan.ha_mqtt_1s]
+#endpoint     = "ha_mqtt"
+#channels     = ["W_pos", "W_neg"]
+#interval_sec = 1
+#qos          = 1
 
 #################################
 # Endpoint Definitions
@@ -74,11 +74,11 @@ qos          = 1
 data_dir = "/var/lib/pqopen" # Path where CSV files will be stored
 
 # MQTT broker settings
-[endpoint.mqtt]
+#[endpoint.mqtt]
 hostname        = "localhost"  # MQTT broker address
 compression     = false        # Enable/Disable gzip compression of JSON payloads
 decimal_places  = 4            # Reduce decimal precision (optional)
-# topic_prefix = "cal/pqopen"   # Optional topic prefix
+#topic_prefix = "dt/pqopen"   # Optional topic prefix
 
 # Home Assistant MQTT endpoint (example, commented out)
 #[endpoint.ha_mqtt]
@@ -90,5 +90,5 @@ decimal_places  = 4            # Reduce decimal precision (optional)
 # Data Acquisition Server (DAQOpen ZMQ)
 #################################
 [zmq_server]
-host = "pqopen-0021"
+host = "localhost"
 port = 50001
