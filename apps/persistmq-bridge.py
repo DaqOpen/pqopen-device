@@ -103,7 +103,7 @@ read_client.loop_start()
 while not app_terminator.kill_now:
     time.sleep(1)
     persist_client_state = write_client.get_status()
-    if persist_client_state["connected"] is None:
+    if persist_client_state["connected"] is None or persist_client_state["cached_items"] > 10:
         status_sender.update("IDLE")
     elif persist_client_state["connected"]:
         status_sender.update("RUNNING")
