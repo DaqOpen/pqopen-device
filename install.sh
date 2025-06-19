@@ -218,6 +218,8 @@ EOF
 # Install mosquitto broker, may be used as gateway
 sudo apt-get install -y mosquitto
 
+# Install chrony as time client
+sudo apt install -y chrony
 
 echo "Installation completed successfully!"
 

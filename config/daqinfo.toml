@@ -23,7 +23,7 @@ delay   = 0                 # Channel-specific sample delay
 unit    = "V"               # Measurement unit (e.g., V for voltage)
 
 [channel.I1]
-ai_pin  = "A5"
+ai_pin  = "A1"
 enabled = true
 gain    = 1.0e-5
 offset  = 0
@@ -57,7 +57,7 @@ delay   = 0
 unit    = "V"
 
 [channel.I3]
-ai_pin  = "A1"
+ai_pin  = "A5"
 enabled = true
 gain    = 1.0e-5
 offset  = 0
@@ -78,6 +78,9 @@ delay  = -8                 # Sensor-specific sample delay (in samples)
 #################################
 # DAQ ZMQ Server Configuration
 #################################
+[app]
+check_timesync = true      # Enable checking of timesync; exit if not synched 
+
 [app.zmq_server]
 daq_port  = ""              # TTY device for Arduino; auto-detect if empty
 tcp_port  = 50001           # TCP port to serve data

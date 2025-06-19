@@ -20,6 +20,7 @@ import threading
 import logging
 import argparse
 import os
+import sys
 
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
@@ -28,6 +29,10 @@ from daqopen.daqinfo import DaqInfo
 from daqopen.duedaq import DueDaq, AcqNotRunningException, DAQErrorException
 from daqopen.helper import GracefulKiller
 from daqopen.daqzmq import DaqPublisher
+
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(SCRIPT_DIR))
+from modules.timesync import is_time_synchronized
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -46,6 +51,13 @@ args = parser.parse_args()
 with open(args.config, "rb") as f:
     daq_config = tomllib.load(f)
 daq_info = DaqInfo.from_dict(daq_config)
+
+# Check time sync
+check_time_sync = daq_config["app"].get("check_timesync", False)
+if check_time_sync:
+    if not is_time_synchronized():
+        logger.error("System time is not synchronized")
+        sys.exit(-1)
 
 # Init terminator
 terminator = GracefulKiller()
