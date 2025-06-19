@@ -108,5 +108,10 @@ while not app_terminator.kill_now:
     elif persist_client_state["connected"]:
         status_sender.update("RUNNING")
 
+read_client.loop_stop()
+read_client.disconnect()
+
+write_client.stop()
+
 status_sender.update("STOPPED")
 

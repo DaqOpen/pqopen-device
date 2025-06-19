@@ -24,7 +24,7 @@ status_receiver = StatusReceiver(services=["persistmq-bridge", "pqopen-app"])
 #Status LED 1 Init
 LED_GREEN = 27
 led_green_last_state = False
-LED_YELLOW = 27
+LED_YELLOW = 17
 led_yellow_last_state = False
 
 gpio_request = gpiod.request_lines(
