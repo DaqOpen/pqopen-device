@@ -25,9 +25,9 @@ last_time = time.time()
 
 #Status LED 1 Init
 LED_GREEN = 27
-led_green_blink_duration = 0.0
+led_green_blink_duration = 0.1
 LED_YELLOW = 17
-led_yellow_last_state = False
+led_yellow_blink_duration = 0.1
 
 gpio_request = gpiod.request_lines(
     path="/dev/gpiochip0",
@@ -66,13 +66,19 @@ while not app_terminator.kill_now:
     if status_receiver.status_reg["persistmq-bridge"]["status"] == "RUNNING":
         gpio_request.set_value(LED_YELLOW, Value.INACTIVE)
     elif status_receiver.status_reg["persistmq-bridge"]["status"] == "IDLE":
-        if led_yellow_last_state:
+        if led_yellow_blink_duration > 0.5:
             gpio_request.set_value(LED_YELLOW, Value.INACTIVE)
-            led_yellow_last_state = False
-        else:
+            led_yellow_blink_duration = -0.1
+        elif led_yellow_blink_duration < -0.5:
             gpio_request.set_value(LED_YELLOW, Value.ACTIVE)
-            led_yellow_last_state = True
+            led_yellow_blink_duration = 0.1
+        elif led_yellow_blink_duration > 0:
+            led_yellow_blink_duration += time_diff
+        elif led_yellow_blink_duration < 0:
+            led_yellow_blink_duration -= time_diff
     else:
         gpio_request.set_value(LED_YELLOW, Value.ACTIVE) # OFF
 
-    
+# Last will: Set LEDS to ON
+gpio_request.set_value(LED_GREEN, Value.ACTIVE)
+gpio_request.set_value(LED_YELLOW, Value.ACTIVE)
