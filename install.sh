@@ -17,6 +17,7 @@ echo "Creating directories..."
 sudo mkdir -p $INSTALL_DIR
 sudo mkdir -p $CONFIG_DIR
 sudo mkdir -p $DATA_DIR
+sudo mkdir -p $CACHE_DIR
 
 # Set permissions
 echo "Setting permissions..."
