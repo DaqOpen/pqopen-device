@@ -75,7 +75,7 @@ echo "Installing Python-Packages"
 pip install pqopen-lib
 pip install paho-mqtt
 pip install persistmq
-pip install pgiod
+pip install gpiod
 
 echo "Deactivate Environment"
 deactivate
