@@ -6,6 +6,7 @@
 INSTALL_DIR="/opt/pqopen"
 CONFIG_DIR="/etc/pqopen"
 DATA_DIR="/var/lib/pqopen"
+CACHE_DIR="/var/lib/persistmq"
 USER="daqopen"
 DEVICE_ID_FILE="$CONFIG_DIR/device-id"
 
@@ -16,11 +17,12 @@ echo "Creating directories..."
 sudo mkdir -p $INSTALL_DIR
 sudo mkdir -p $CONFIG_DIR
 sudo mkdir -p $DATA_DIR
+sudo mkdir -p $CACHE_DIR
 
 # Set permissions
 echo "Setting permissions..."
-sudo chown -R $USER:$USER $INSTALL_DIR $CONFIG_DIR $DATA_DIR 
-sudo chmod -R 755 $INSTALL_DIR $CONFIG_DIR $DATA_DIR
+sudo chown -R $USER:$USER $INSTALL_DIR $CONFIG_DIR $DATA_DIR $CACHE_DIR
+sudo chmod -R 755 $INSTALL_DIR $CONFIG_DIR $DATA_DIR $CACHE_DIR
 
 # Copy files
 echo "Copying files..."
@@ -73,7 +75,7 @@ echo "Installing Python-Packages"
 pip install pqopen-lib
 pip install paho-mqtt
 pip install persistmq
-pip install pgiod
+pip install gpiod
 
 echo "Deactivate Environment"
 deactivate
