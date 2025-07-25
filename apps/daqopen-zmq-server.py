@@ -77,10 +77,14 @@ daq_pub = DaqPublisher(daq_info=daq_info,
                        port=daq_config["app"]["zmq_server"]["tcp_port"])
 
 # Local Time Sync
+start_time = time.time()
 last_system_time = 0.0
 acq_timestamp = 0.0
 sync_interval_sec = 10
 acq_time_correction_factor = 1.0
+acq_time_correction_diff = 0.0
+acq_time_correction_sum = 0.0
+acq_time_correction_count = 0
 time_diff_sum = 0.0
 last_log_timestamp = 0.0
 
@@ -105,7 +109,8 @@ while not terminator.kill_now:
     if last_system_time == 0:
         last_system_time = actual_timestamp
         acq_timestamp = actual_timestamp
-    acq_timestamp += data.shape[0] / myDaq.samplerate * acq_time_correction_factor
+    acq_time_correction = (acq_time_correction_factor+acq_time_correction_diff) 
+    acq_timestamp += data.shape[0] / myDaq.samplerate * acq_time_correction
     
     # Send data with ZMQ
     daq_pub.send_data(data, sent_packet_num, acq_timestamp, True)
@@ -123,8 +128,23 @@ while not terminator.kill_now:
         if abs(time_diff) > 10.0:
             logger.error(f"Time Jump detected ({time_diff:f}s): Shutting down Service")
             break
-        acq_time_correction_factor = 1.0 + time_diff/(actual_timestamp - last_system_time) + time_diff_sum/sync_interval_sec
-        logger.info(f"Actual Time Difference: {time_diff*1000:.1f} ms, Actual Correction Factor: {acq_time_correction_factor:.4f}, Actual Diff Sum: {time_diff_sum:.3f} s")
+        # Initial Sync of time, calculate correction gain
+        if start_time + 60 > actual_timestamp:
+            acq_time_correction_factor = 1.0 + time_diff/(actual_timestamp - last_system_time) + time_diff_sum/sync_interval_sec
+            last_correction_factor_calc_time = actual_timestamp
+        # Adaption of difference after 1 Minute
+        else:
+            acq_time_correction_diff = 0.5*time_diff/sync_interval_sec
+            acq_time_correction_sum += acq_time_correction_diff
+            acq_time_correction_count += 1
+        # Calculate new correction gain every hour (integral)
+        if last_correction_factor_calc_time + 3600 < actual_timestamp:
+            acq_time_correction_factor += acq_time_correction_sum / acq_time_correction_count
+            acq_time_correction_diff = 0.0
+            acq_time_correction_sum = 0.0
+            acq_time_correction_count = 0
+            last_correction_factor_calc_time = actual_timestamp
+        logger.info(f"Time Diff: {time_diff*1000:.1f} ms, Corr Factor: {acq_time_correction_factor:.8f}, Corr Diff: {acq_time_correction_diff:.8f}")
         last_system_time = actual_timestamp
 
 myDaq.stop_acquisition()
