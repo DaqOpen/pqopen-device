@@ -77,13 +77,13 @@ daq_pub = DaqPublisher(daq_info=daq_info,
                        port=daq_config["app"]["zmq_server"]["tcp_port"])
 
 # Local Time Sync
-start_time = time.time()
+#start_time = time.time()
 last_system_time = 0.0
 acq_timestamp = 0.0
+sample_count = 0
 sync_interval_sec = 10
 acq_time_correction_factor = 1.0
 acq_time_correction_integral = 0.0
-time_diff_sum = 0.0
 last_log_timestamp = 0.0
 
 # Prepare for acquisition
@@ -107,8 +107,11 @@ while not terminator.kill_now:
     if last_system_time == 0:
         last_system_time = actual_timestamp
         acq_timestamp = actual_timestamp
-    acq_time_correction = (acq_time_correction_factor+acq_time_correction_integral) 
-    acq_timestamp += data.shape[0] / myDaq.samplerate * acq_time_correction
+        start_time = actual_timestamp
+    else:
+        acq_time_correction = (acq_time_correction_factor+acq_time_correction_integral) 
+        acq_timestamp += data.shape[0] / myDaq.samplerate * acq_time_correction
+        sample_count += data.shape[0]
     
     # Send data with ZMQ
     daq_pub.send_data(data, sent_packet_num, acq_timestamp, True)
@@ -122,17 +125,12 @@ while not terminator.kill_now:
     # Sync Time
     if actual_timestamp > (last_system_time + sync_interval_sec):
         time_diff = actual_timestamp - acq_timestamp
+        total_time_diff_uncorrected = (actual_timestamp - start_time) - sample_count / myDaq.samplerate
         if abs(time_diff) > 10.0:
             logger.error(f"Time Jump detected ({time_diff:f}s): Shutting down Service")
             break
-        # Initial Sync of time, calculate correction gain
-        if start_time + 60 > actual_timestamp:
-            acq_time_correction_factor = 1.0 + time_diff/(actual_timestamp - last_system_time) + time_diff_sum/sync_interval_sec
-            last_correction_factor_calc_time = actual_timestamp
-        else:
-            acq_time_error = time_diff/(actual_timestamp - last_system_time)
-            acq_time_correction_integral += 0.1*acq_time_error - 0.02*acq_time_correction_integral
-        
+        acq_time_correction_factor = 1.0 + total_time_diff_uncorrected / (actual_timestamp - start_time)
+        acq_time_correction_integral += 0.001*time_diff - 0.05*acq_time_correction_integral
         logger.info(f"Time Diff: {time_diff*1000:.1f} ms, Corr Factor: {acq_time_correction_factor:.8f}, Corr Int: {acq_time_correction_integral:.8f}")
         last_system_time = actual_timestamp
 
