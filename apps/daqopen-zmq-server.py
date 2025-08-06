@@ -114,7 +114,7 @@ while not terminator.kill_now:
         sample_count += data.shape[0]
     
     # Send data with ZMQ
-    daq_pub.send_data(data, sent_packet_num, acq_timestamp, True)
+    daq_pub.send_data(data, sent_packet_num, acq_timestamp - daq_info.board.adc_delay_seconds, True)
     sent_packet_num += 1
 
     # Log Status
