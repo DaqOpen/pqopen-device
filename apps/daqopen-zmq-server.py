@@ -4,19 +4,18 @@ Description: app for reading the data from daq and providing it via zmq
 
 Author: Michael Oberhofer
 Created on: 2024-03-13
-Last Updated: 2025-01-06
+Last Updated: 2025-08-21
 
 License: MIT
 
 Notes: 
 
-Version: 0.03
+Version: 0.5
 Github: https://github.com/DaqOpen/pqopen-device/apps
 """
 
 import tomllib
 import time
-import threading
 import logging
 import argparse
 import os
@@ -79,11 +78,11 @@ daq_pub = DaqPublisher(daq_info=daq_info,
 # Local Time Sync
 #start_time = time.time()
 last_system_time = 0.0
-acq_timestamp = 0.0
+acq_timestamp_ns = 0
 sample_count = 0
 sync_interval_sec = 10
 acq_time_correction_factor = 1.0
-acq_time_correction_integral = 0.0
+acq_time_correction_integral = 0
 last_log_timestamp = 0.0
 
 # Prepare for acquisition
@@ -91,6 +90,10 @@ sent_packet_num = 0
 
 # Start acquisition
 myDaq.start_acquisition()
+
+# Blind read Data for settling timing
+for i in range(5):
+    data = myDaq.read_data()
 
 while not terminator.kill_now:
     # Read Data from DAQ
@@ -106,15 +109,13 @@ while not terminator.kill_now:
     actual_timestamp = time.time()
     if last_system_time == 0:
         last_system_time = actual_timestamp
-        acq_timestamp = actual_timestamp
         start_time = actual_timestamp
     else:
-        acq_time_correction = (acq_time_correction_factor+acq_time_correction_integral) 
-        acq_timestamp += data.shape[0] / myDaq.samplerate * acq_time_correction
+        acq_timestamp_ns += (data.shape[0]*1_000_000_000) // daq_info.board.samplerate + acq_time_correction_integral
         sample_count += data.shape[0]
-    
+
     # Send data with ZMQ
-    daq_pub.send_data(data, sent_packet_num, acq_timestamp - daq_info.board.adc_delay_seconds, True)
+    daq_pub.send_data(data, sent_packet_num, acq_timestamp_ns/1e9 + start_time - daq_info.board.adc_delay_seconds, True)
     sent_packet_num += 1
 
     # Log Status
@@ -124,14 +125,14 @@ while not terminator.kill_now:
 
     # Sync Time
     if actual_timestamp > (last_system_time + sync_interval_sec):
-        time_diff = actual_timestamp - acq_timestamp
-        total_time_diff_uncorrected = (actual_timestamp - start_time) - sample_count / myDaq.samplerate
+        time_diff = actual_timestamp - (acq_timestamp_ns/1e9 + start_time)
+        total_time_diff_uncorrected = (actual_timestamp - start_time) - sample_count / daq_info.board.samplerate
         if abs(time_diff) > 10.0:
             logger.error(f"Time Jump detected ({time_diff:f}s): Shutting down Service")
             break
         acq_time_correction_factor = 1.0 + total_time_diff_uncorrected / (actual_timestamp - start_time)
-        acq_time_correction_integral += 0.001*time_diff - 0.05*acq_time_correction_integral
-        logger.info(f"Time Diff: {time_diff*1000:.1f} ms, Corr Factor: {acq_time_correction_factor:.8f}, Corr Int: {acq_time_correction_integral:.8f}")
+        acq_time_correction_integral += int(1e5*time_diff - 0.1*acq_time_correction_integral)
+        logger.debug(f"Time Diff: {time_diff*1000:.1f} ms, Corr Factor: {acq_time_correction_factor:.8f}, Corr Int: {acq_time_correction_integral:d}")
         last_system_time = actual_timestamp
 
 myDaq.stop_acquisition()
