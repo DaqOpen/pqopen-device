@@ -80,6 +80,8 @@ power_system.enable_fluctuation_calculation(nominal_voltage=config["powersystem"
 power_system.enable_mains_signaling_calculation(frequency=config["powersystem"].get("msv_frequency", 383.3))
 power_system.enable_under_over_deviation_calculation(u_din=config["powersystem"].get("nominal_voltage", 230.0))
 power_system.enable_energy_channels(Path(config["powersystem"].get("energy_file_path", "/tmp/energy.json")))
+if config["powersystem"].get("enable_one_period_fundamental", False):
+    power_system.enable_one_period_fundamental()
 power_system._update_calc_channels()
 
 # Initialize Storage Controller
