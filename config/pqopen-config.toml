@@ -10,6 +10,7 @@ nominal_voltage   = 230.0       # Nominal voltage in Volt
 msv_frequency     = 383.3       # Mains signaling frequency in Hz
 zcd_channel       = "U1"        # Channel for Zero-Cross Detection (Cycle Sync)
 energy_file_path  = "./energy.json" # Path to persist energy data
+# enable_one_period_fundamental = false
 
 # Phase Channel Mappings
 [powersystem.phase.1]
@@ -53,8 +54,8 @@ store_events = true         # Also store events with this storage plan
 # Raw DataChannelBuffer transfer over MQTT (no aggregation)
 [storageplan.mqtt_dataseries]
 endpoint     = "mqtt"
-mqtt_topic_prefix = "private"  # topic prefix for this storage plan
-channels     = ["Freq", "U1_1p_rms"]
+mqtt_topic_prefix = "test"  # topic prefix for this storage plan
+channels     = ["Freq", "U1_1p_H1_rms", "U1_1p_H1_phi", "U1_pmu_rms", "U1_pmu_phi"]
 interval_sec = 0            # 0 means no aggregation
 
 # 1-second MQTT storage for Home Assistant
@@ -74,10 +75,10 @@ interval_sec = 0            # 0 means no aggregation
 data_dir = "/var/lib/pqopen" # Path where CSV files will be stored
 
 # MQTT broker settings
-#[endpoint.mqtt]
+[endpoint.mqtt]
 hostname        = "localhost"  # MQTT broker address
-compression     = false        # Enable/Disable gzip compression of JSON payloads
-decimal_places  = 4            # Reduce decimal precision (optional)
+compression     = true        # Enable/Disable gzip compression of JSON payloads
+decimal_places  = 5            # Reduce decimal precision (optional)
 #topic_prefix = "dt/pqopen"   # Optional topic prefix
 
 # Home Assistant MQTT endpoint (example, commented out)

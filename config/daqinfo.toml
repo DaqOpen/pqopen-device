@@ -4,10 +4,12 @@
 # Board Settings
 #################################
 [board]
-type         = "duedaq"     # Board type identifier
-samplerate   = 50000        # Sampling rate in Hz
-differential = true         # Input configuration: true = differential, false = single-ended
-gain         = "DIFF_1X"    # Allowed values: SGL_1X, SGL_2X, SGL_4X, DIFF_05X, DIFF_1X, DIFF_2X
+type              = "duedaq"     # Board type identifier
+samplerate        = 50000        # Sampling rate in Hz
+differential      = true         # Input configuration: true = differential, false = single-ended
+gain              = "DIFF_1X"    # Allowed values: SGL_1X, SGL_2X, SGL_4X, DIFF_05X, DIFF_1X, DIFF_2X
+#adc_clock_gain    = 0.99996     # ADC clock adjustment factor
+#adc_delay_seconds = 0.00464     # Input to Timestamp delay in seconds
 
 #################################
 # Channel Configuration

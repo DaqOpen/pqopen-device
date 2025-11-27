@@ -4,13 +4,13 @@ Description: app for reading the data from daq and providing it via zmq
 
 Author: Michael Oberhofer
 Created on: 2024-03-13
-Last Updated: 2025-08-21
+Last Updated: 2025-11-27
 
 License: MIT
 
 Notes: 
 
-Version: 0.5
+Version: 0.6
 Github: https://github.com/DaqOpen/pqopen-device/apps
 """
 
@@ -20,6 +20,7 @@ import logging
 import argparse
 import os
 import sys
+import numpy as np
 
 os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
@@ -33,7 +34,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 from modules.timesync import is_time_synchronized
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Configure Argparser
@@ -76,24 +77,18 @@ daq_pub = DaqPublisher(daq_info=daq_info,
                        port=daq_config["app"]["zmq_server"]["tcp_port"])
 
 # Local Time Sync
-#start_time = time.time()
-last_system_time = 0.0
-acq_timestamp_ns = 0
-sample_count = 0
-sync_interval_sec = 10
-acq_time_correction_factor = 1.0
-acq_time_correction_integral = 0
 last_log_timestamp = 0.0
+ts_agg_window = 51
+ts_array = np.zeros(ts_agg_window)
+diff_agg_window = 1000
+diff_array = np.zeros(diff_agg_window)
+daq_ts_seconds = 0.0
 
 # Prepare for acquisition
 sent_packet_num = 0
 
 # Start acquisition
 myDaq.start_acquisition()
-
-# Blind read Data for settling timing
-for i in range(5):
-    data = myDaq.read_data()
 
 while not terminator.kill_now:
     # Read Data from DAQ
@@ -107,33 +102,29 @@ while not terminator.kill_now:
 
     # Generate Timestamp
     actual_timestamp = time.time()
-    if last_system_time == 0:
-        last_system_time = actual_timestamp
-        start_time = actual_timestamp
-    else:
-        acq_timestamp_ns += (data.shape[0]*1_000_000_000) // daq_info.board.samplerate + acq_time_correction_integral
-        sample_count += data.shape[0]
+    ts_array = np.roll(ts_array, -1)
+    ts_array[-1] = actual_timestamp
+    diff_array = np.roll(diff_array, -1)
+    diff_array[-1] = ts_array[-1] - ts_array[-2]
 
-    # Send data with ZMQ
-    daq_pub.send_data(data, sent_packet_num, acq_timestamp_ns/1e9 + start_time - daq_info.board.adc_delay_seconds, True)
-    sent_packet_num += 1
+    if myDaq._num_frames_read > 10:
+        packet_ts_diff_mean = diff_array[-sent_packet_num-1:].mean()
+        packet_ts_diff_med = np.median(diff_array[-sent_packet_num-1:])
+        packet_ts_diff_min = diff_array[-sent_packet_num-1:].min()
+        packet_ts_diff_max = diff_array[-sent_packet_num-1:].max()
+        ts_mean = ts_array[-sent_packet_num-1:].mean()
+        daq_ts_seconds = ts_mean + packet_ts_diff_mean*(0.5*min(sent_packet_num+1, ts_agg_window) - 0.5)
+        if (packet_ts_diff_min < packet_ts_diff_med/2) or (packet_ts_diff_max > packet_ts_diff_med*2):
+            logger.error("High packet jitter - quit")
+            sys.exit(1)
+        # Send data with ZMQ
+        daq_pub.send_data(data, sent_packet_num, daq_ts_seconds - daq_info.board.adc_delay_seconds, True)
+        sent_packet_num += 1
 
     # Log Status
     if actual_timestamp > last_log_timestamp + 60:
-        logger.info(f"Packet Number: {sent_packet_num:d}")
+        logger.info(f"Packet Number: {sent_packet_num:d}, samplerate: {data.shape[0]/diff_array[-sent_packet_num-1:].mean():f}")
         last_log_timestamp = actual_timestamp
-
-    # Sync Time
-    if actual_timestamp > (last_system_time + sync_interval_sec):
-        time_diff = actual_timestamp - (acq_timestamp_ns/1e9 + start_time)
-        total_time_diff_uncorrected = (actual_timestamp - start_time) - sample_count / daq_info.board.samplerate
-        if abs(time_diff) > 10.0:
-            logger.error(f"Time Jump detected ({time_diff:f}s): Shutting down Service")
-            break
-        acq_time_correction_factor = 1.0 + total_time_diff_uncorrected / (actual_timestamp - start_time)
-        acq_time_correction_integral += int(1e5*time_diff - 0.1*acq_time_correction_integral)
-        logger.debug(f"Time Diff: {time_diff*1000:.1f} ms, Corr Factor: {acq_time_correction_factor:.8f}, Corr Int: {acq_time_correction_integral:d}")
-        last_system_time = actual_timestamp
 
 myDaq.stop_acquisition()
 daq_pub.terminate()
