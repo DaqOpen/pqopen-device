@@ -64,6 +64,8 @@ daq_buffer = AcqBufferPool(daq_info=daq_sub.daq_info,
                            data_columns=daq_sub.data_columns,
                            start_timestamp_us=int(daq_sub.timestamp*1e6),
                            size=200_000)
+input_wiring = config["powersystem"].get("input_wiring", "3P4W")    
+
 
 # Create Powersystem Object
 power_system = PowerSystem(zcd_channel = daq_buffer.channel[config["powersystem"]["zcd_channel"]],
@@ -82,6 +84,11 @@ power_system.enable_under_over_deviation_calculation(u_din=config["powersystem"]
 power_system.enable_energy_channels(Path(config["powersystem"].get("energy_file_path", "/tmp/energy.json")))
 if config["powersystem"].get("enable_one_period_fundamental", False):
     power_system.enable_one_period_fundamental()
+if config["powersystem"].get("enable_rms_trapz_rule", False):
+    power_system.enable_rms_trapz_rule()
+if config["powersystem"].get("enable_mains_signaling_tracer", False):
+    power_system.enable_mains_signaling_tracer()
+#power_system.enable_pmu_calculation()
 power_system._update_calc_channels()
 
 # Initialize Storage Controller
@@ -121,7 +128,17 @@ while not app_terminator.kill_now:
         break
     else:
         last_packet_number = daq_sub.packet_num
-    daq_buffer.put_data_with_timestamp(m_data, int(daq_sub.timestamp*1e6))
+    if input_wiring == "3P3W":
+        m_data_conv = m_data.copy()
+        u1_column = daq_sub.data_columns[daq_sub.daq_info.channel["U1"].ai_pin]
+        u2_column = daq_sub.data_columns[daq_sub.daq_info.channel["U2"].ai_pin]
+        u3_column = daq_sub.data_columns[daq_sub.daq_info.channel["U3"].ai_pin]
+        m_data_conv[:,u1_column] = 1/3*(m_data[:,u2_column] - m_data[:,u3_column])
+        m_data_conv[:,u2_column] = 1/3*(-2*m_data[:,u2_column] - m_data[:,u3_column])
+        m_data_conv[:,u3_column] = 1/3*(2*m_data[:,u3_column] + m_data[:,u2_column])
+        daq_buffer.put_data_with_timestamp(m_data_conv, int(daq_sub.timestamp*1e6))
+    else:
+        daq_buffer.put_data_with_timestamp(m_data, int(daq_sub.timestamp*1e6))
     power_system.process()
     events = event_controller.process()
     storage_controller.process()
