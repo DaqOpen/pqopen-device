@@ -23,6 +23,7 @@ gain    = 0.22              # Gain correction factor
 offset  = 0                 # Offset correction value
 delay   = 0                 # Channel-specific sample delay
 unit    = "V"               # Measurement unit (e.g., V for voltage)
+freq_response = [[50, 1.000],[1250, 0.9856],[2250, 0.9552],[3350, 0.9087],[4950, 0.8293]]
 
 [channel.I1]
 ai_pin  = "A1"
@@ -40,6 +41,7 @@ gain    = 0.22
 offset  = 0
 delay   = 0
 unit    = "V"
+freq_response = [[50, 1.000],[1250, 0.9856],[2250, 0.9552],[3350, 0.9087],[4950, 0.8293]]
 
 [channel.I2]
 ai_pin  = "A3"
@@ -57,6 +59,7 @@ gain    = 0.22
 offset  = 0
 delay   = 0
 unit    = "V"
+freq_response = [[50, 1.000],[1250, 0.9856],[2250, 0.9552],[3350, 0.9087],[4950, 0.8293]]
 
 [channel.I3]
 ai_pin  = "A5"

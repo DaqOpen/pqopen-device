@@ -98,7 +98,10 @@ storage_controller.setup_endpoints_and_storageplans(endpoints=config["endpoint"]
                                                     available_channels=power_system.output_channels,
                                                     measurement_id=measurement_id,
                                                     device_id=device_id,
-                                                    start_timestamp_us=int(daq_sub.timestamp*1e6))
+                                                    start_timestamp_us=int(daq_sub.timestamp*1e6),
+                                                    m_config=config,
+                                                    daq_info=daq_sub.daq_info,
+                                                    channel_info=power_system.get_channel_info())
 
 # Initialize Event Controller
 event_controller = EventController(time_channel=daq_buffer.time, sample_rate=daq_sub.daq_info.board.samplerate)
