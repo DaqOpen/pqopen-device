@@ -115,8 +115,7 @@ while not terminator.kill_now:
         ts_mean = ts_array[-sent_packet_num-1:].mean()
         daq_ts_seconds = ts_mean + packet_ts_diff_mean*(0.5*min(sent_packet_num+1, ts_agg_window) - 0.5)
         if (packet_ts_diff_min < packet_ts_diff_med/2) or (packet_ts_diff_max > packet_ts_diff_med*2):
-            logger.error("High packet jitter - quit")
-            sys.exit(1)
+            logger.warning(f"High packet jitter: packet_ts_diff_min={packet_ts_diff_min:f}, packet_ts_diff_max={packet_ts_diff_max:f}, packet_ts_diff_med={packet_ts_diff_med:f}")
         # Send data with ZMQ
         daq_pub.send_data(data, sent_packet_num, daq_ts_seconds - daq_info.board.adc_delay_seconds, True)
         sent_packet_num += 1
